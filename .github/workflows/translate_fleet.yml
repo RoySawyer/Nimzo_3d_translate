@@ -14,7 +14,7 @@ on:
       pot_file:
         description: 'Path to source template POT/PO file'
         required: true
-        default: 'locales/nimzo_3d.pot'
+        default: 'locales/nimzo_3d_template.pot'
 
 jobs:
   translate:
