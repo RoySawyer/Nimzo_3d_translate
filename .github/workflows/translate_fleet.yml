@@ -1,0 +1,75 @@
+name: Fleet Translation Engine
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_language:
+        description: 'Target Language Name (e.g. Italian, Indonesian)'
+        required: true
+        default: 'Italian'
+      lang_code:
+        description: 'ISO 639-1 Language Code (e.g. it, id, hi)'
+        required: true
+        default: 'it'
+      pot_file:
+        description: 'Path to source template POT/PO file'
+        required: true
+        default: 'locales/nimzo_3d.pot'
+
+jobs:
+  translate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext
+
+      - name: Install Python Dependencies
+        run: |
+          pip install polib openai
+
+      - name: Execute Translation Engine
+        env:
+          MODEL_API_KEY: ${{ secrets.MODEL_API_KEY }}
+          MODEL_API_BASE: 'https://api.cerebras.ai/v1'
+          MODEL_NAME: 'llama3.1-8b'
+        run: |
+          python scripts/translate_engine.py \
+            --pot "${{ github.event.inputs.pot_file }}" \
+            --lang "${{ github.event.inputs.target_language }}" \
+            --code "${{ github.event.inputs.lang_code }}" \
+            --output "locales/${{ github.event.inputs.lang_code }}/LC_MESSAGES/nimzo_3d.po"
+
+      - name: Validate & Compile Binary Catalog (.mo)
+        run: |
+          PO_PATH="locales/${{ github.event.inputs.lang_code }}/LC_MESSAGES/nimzo_3d.po"
+          MO_PATH="locales/${{ github.event.inputs.lang_code }}/LC_MESSAGES/nimzo_3d.mo"
+          echo "Compiling $PO_PATH -> $MO_PATH"
+          msgfmt -c -v -o "$MO_PATH" "$PO_PATH"
+
+      - name: Upload Language Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: locale-${{ github.event.inputs.lang_code }}
+          path: |
+            locales/${{ github.event.inputs.lang_code }}/LC_MESSAGES/*.po
+            locales/${{ github.event.inputs.lang_code }}/LC_MESSAGES/*.mo
+
+      - name: Commit & Push Changes
+        run: |
+          git config user.name "Fleet Translator Bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add locales/
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-translation: add [${{ github.event.inputs.lang_code }}] catalog" && git push)
