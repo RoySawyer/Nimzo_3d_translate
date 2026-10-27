@@ -107,6 +107,13 @@ def validate_complete_catalog(po):
         )
 
 
+def set_language_metadata(po, language_code: str):
+    po.metadata["Language"] = language_code
+    for entry in po:
+        if not entry.msgid and "fuzzy" in entry.flags:
+            entry.flags.remove("fuzzy")
+
+
 def main():
     args = parse_args()
     if not args.lang.strip():
@@ -119,7 +126,7 @@ def main():
         entry for entry in po
         if entry.msgid and (not entry.msgstr.strip() or "fuzzy" in entry.flags)
     ]
-    po.metadata["Language"] = args.code
+    set_language_metadata(po, args.code)
 
     if pending:
         api_key = os.getenv("MODEL_API_KEY")
