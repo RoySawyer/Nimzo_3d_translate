@@ -198,7 +198,7 @@ def main():
             po.save(args.output)
             print(f"Progress: {min(i + batch_size, len(pending))}/{len(pending)} strings processed.")
             # Be polite to Cerebras rate limiter
-            time.sleep(1.0)
+            time.sleep(1.5)
     else:
         print("All strings are already translated.")
 
