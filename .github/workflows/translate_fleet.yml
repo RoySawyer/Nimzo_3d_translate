@@ -46,8 +46,8 @@ jobs:
       - name: Execute Translation Engine
         env:
           MODEL_API_KEY: ${{ secrets.MODEL_API_KEY }}
-          MODEL_API_BASE: 'https://api.cerebras.ai/v1'
-          MODEL_NAME: 'llama3.1-8b'
+          MODEL_API_BASE: 'https://api.mistral.ai/v1'
+          MODEL_NAME: 'mistral-small-latest'
           POT_FILE: ${{ github.event.inputs.pot_file }}
           TARGET_LANGUAGE: ${{ github.event.inputs.target_language }}
           LANG_CODE: ${{ github.event.inputs.lang_code }}
